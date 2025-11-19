@@ -1,0 +1,17 @@
+{
+    "task": "viscosity",
+    "mode": "Fundamental_props",
+    "pooling_mode": "adj_mean",
+    "activation_fn": "leaky_relu",
+    "embedding_dim": 32,
+    "output_dim": 1,
+    "encoder_width": 128,
+    "encoder_depth": 2,
+    "decoder_width": 256,
+    "decoder_depth": 5,
+    "dropout_prob": 0.0220019488190774,
+    "num_heads": 1,
+    "permute": true,
+    "max_len": 15
+  }
+  
