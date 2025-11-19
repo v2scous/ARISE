@@ -1,0 +1,43 @@
+# Ignore Python cache
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+.conda/
+
+# Ignore macOS
+.DS_Store
+
+# Ignore Windows
+Thumbs.db
+
+# Ignore VSCode settings
+.vscode/
+
+# Ignore intermediate results
+results/*.csv
+results/*.txt
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Ignore local configuration files
+*.local
+*.env
+.env.*
