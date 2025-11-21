@@ -6,23 +6,23 @@ from torch.utils.data import Dataset
 class EmbeddingSequenceDataset(Dataset):
     """
     dat: pandas.DataFrame
-         (26개 component column + sentence_feature(예: 온도 등) + target)
-    embedding_table: 각 component에 대한 임베딩 테이블
-                     (DataFrame: columns = component 이름, rows = 임베딩 차원)
-    max_len: 시퀀스 최대 길이 (component 개수 상한)
+         (component column + temperature + target)
+    embedding_table: initial embedding table of each component
+                     (DataFrame: columns = components, rows = initial embedding dimension)
+    max_len: maximum length of sequence (component upper boundary)
     """
     def __init__(self, dat, embedding_table, max_len=15):
         # dat: pandas.DataFrame
         self.dat = dat.reset_index(drop=True)
-        self.vocab = list(embedding_table.columns)
-        self.vocab_size = len(self.vocab)
+        self.component = list(embedding_table.columns)
+        self.comp_size = len(self.component)
         self.embedding_dim = len(embedding_table.iloc[:, 0])
         self.max_len = max_len
 
-        # component별 임베딩 딕셔너리 생성
+        # embedding table for each component
         self.embedding_dict = {
             ch: torch.tensor(embedding_table[ch].values, dtype=torch.float32)
-            for ch in self.vocab
+            for ch in self.component
         }
 
     def __len__(self):
@@ -30,20 +30,20 @@ class EmbeddingSequenceDataset(Dataset):
 
     def __getitem__(self, idx):
         sample = self.dat.iloc[idx].values
-        # 앞 vocab_size개의 값: 각 component의 비율(예: mole fraction)
-        word_ratios = sample[:self.vocab_size]
-        # 그 다음 1개: sentence_feature (예: 온도)
-        sentence_feature = sample[self.vocab_size]
-        # 마지막: target 값 (예: log(viscosity))
-        target = sample[self.vocab_size + 1]
+        # mole fraction of components
+        comp_fraction = sample[:self.comp_size]
+        # temperature
+        temperature = sample[self.comp_size]
+        # target property
+        target = sample[self.comp_size + 1]
 
         tokens = []
-        for i, ratio in enumerate(word_ratios):
-            if ratio > 0:
-                word = self.vocab[i]
-                word_emb = self.embedding_dict[word]
+        for i, fraction in enumerate(comp_fraction):
+            if fraction > 0:
+                comp = self.component[i]
+                comp_emb = self.embedding_dict[comp]
                 token = torch.cat(
-                    [word_emb, torch.tensor([ratio, sentence_feature], dtype=word_emb.dtype)]
+                    [comp_emb, torch.tensor([fraction, temperature], dtype=comp_emb.dtype)]
                 )
                 tokens.append(token)
 
@@ -66,3 +66,4 @@ class EmbeddingSequenceDataset(Dataset):
             "attention_mask": mask,    # (max_len,)
             "target": torch.tensor(target, dtype=torch.float32),
         }
+
