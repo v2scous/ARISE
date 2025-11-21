@@ -39,7 +39,7 @@ def inference(
     T=20,
 ):
     """
-    공용 inference 함수 (MC Dropout 옵션 포함)
+    Common inference function
 
     Returns
     -------
@@ -48,7 +48,7 @@ def inference(
     """
     model.eval()
     if mc_dropout:
-        # MC Dropout를 위해 train 모드로 전환 (Dropout 활성화)
+        # Dropout active
         model.train()
 
     all_preds = []
@@ -62,11 +62,11 @@ def inference(
                 preds_T = []
                 for _ in range(T):
                     preds = model(x, disable_permutation=True).squeeze()
-                    preds_T.append(preds.unsqueeze(0))  # (1, B) or (1, B, 1)
-                preds_T = torch.cat(preds_T, dim=0)      # (T, B)
-                mean_preds = preds_T.mean(dim=0)         # (B,)
-                std_preds = preds_T.std(dim=0)           # (B,)
-                all_preds.append(torch.stack([mean_preds, std_preds], dim=1))  # (B, 2)
+                    preds_T.append(preds.unsqueeze(0))  
+                preds_T = torch.cat(preds_T, dim=0)     
+                mean_preds = preds_T.mean(dim=0)         
+                std_preds = preds_T.std(dim=0)           
+                all_preds.append(torch.stack([mean_preds, std_preds], dim=1)) 
             else:
                 preds = model(x, disable_permutation=True).squeeze()
                 all_preds.append(preds)
@@ -84,3 +84,4 @@ def inference(
             return all_preds.cpu().numpy(), all_targets.cpu().numpy()
 
     return all_preds if return_tensor else all_preds.cpu().numpy()
+
