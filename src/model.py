@@ -81,7 +81,6 @@ class ComponentEncoder(nn.Module):
         self.embedding = self.output_proj(X)  # (batch_size, comp_num, embedding_dim)
 
         if self.mode == "Fundamental_props":
-            # x[..., -2]가 mole fraction이라고 가정
             self.mask = x[:, :, -2] == 0.0  # (batch_size, comp_num)
             X_embed_masked = self.embedding.masked_fill(self.mask.unsqueeze(-1), 0.0)
             self.X_embed_masked = X_embed_masked
@@ -132,9 +131,8 @@ class FunctionDecoder(nn.Module):
 
 class Pooling(nn.Module):
     """
-    Deep Sets 형태 풀링 모듈.
-    입력: (batch_size, comp_num, emb_size)
-    출력: (batch_size, emb_size)
+    Input: (batch_size, comp_num, emb_size)
+    Output: (batch_size, emb_size)
     """
     def __init__(self, pooling_mode: str = "mean"):
         super().__init__()
@@ -168,7 +166,7 @@ class PermutationLayer(nn.Module):
     def forward(self, X_emb, force_disable: bool = False):
         """
         X_emb: (batch_size, num_components, embedding_dim)
-        force_disable: True이면 permutation 비활성화
+        force_disable: If True, then permutation off
         """
         if self.permute and self.training and not force_disable:
             batch_size, num_components, _ = X_emb.shape
@@ -195,7 +193,7 @@ class SelfAttention(nn.Module):
         )
 
     def forward(self, x, mask=None):
-        # mask: (batch_size, seq_len) → key_padding_mask: True는 무시됨
+        # mask: (batch_size, seq_len) → key_padding_mask: ignore 0 mole fraction component
         key_padding_mask = mask if mask is not None else None
         attn_output, attn_weights = self.Attention(
             x, x, x, key_padding_mask=key_padding_mask
@@ -242,8 +240,6 @@ class ProposedModel(nn.Module):
         )
         self.PermutationLayer = PermutationLayer(permute=permute)
         self.Pooling_Layer = Pooling(pooling_mode=pooling_mode)
-        # ⚠️ 여기 이름은 "Function_Decoer" 그대로 둬야
-        # 기존 state_dict 키와 맞음 (네가 쓴 가중치에 맞추기 위함)
         self.Function_Decoer = FunctionDecoder(
             embedding_dim=embedding_dim,
             output_dim=output_dim,
@@ -269,16 +265,16 @@ def build_viscosity_model_from_config(
     device: torch.device,
 ) -> nn.Module:
     """
-    JSON config로부터 ProposedModel 생성
+    Build ProposedModel from JSON config
 
     Parameters
     ----------
     config : dict
-        JSON에서 읽은 하이퍼파라미터 딕셔너리
+        Dictionary for Hyperparameters from JSON
     input_dim : int
         len(properties.iloc[:, 0]) + 2
     device : torch.device
-        'cpu' 또는 'cuda'
+        'cpu' or 'cuda'
     """
 
     model = ProposedModel(
@@ -302,3 +298,4 @@ def build_viscosity_model_from_config(
     model.to(device)
     model.eval()
     return model
+
