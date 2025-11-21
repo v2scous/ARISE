@@ -3,7 +3,7 @@
 import argparse
 import json
 import numpy as np
-import pandas as pd      # ← 이 줄이 반드시 필요함!!!
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
@@ -67,7 +67,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # 1) 데이터 로딩
+    # 1) Load Data
     properties = pd.read_csv(args.properties_csv)
     if "Unnamed: 0" in properties.columns:
         properties = properties.drop(columns=["Unnamed: 0"])
@@ -89,7 +89,7 @@ def main():
         shuffle=False,
     )
 
-    # 3) 모델 생성 + weight 로드
+    # 3) Build model and load weights
     input_dim = len(properties.iloc[:, 0]) + 2
 
     with open(args.config, "r") as f:
@@ -107,7 +107,7 @@ def main():
     else:
         model.load_state_dict(state)
 
-    # 4) 예측
+    # 4) Inference
     preds = inference(
         model=model,
         dataloader=test_loader,
@@ -118,7 +118,7 @@ def main():
         T=args.T,
     )
 
-    # 5) 저장
+    # 5) Save
 
     if isinstance(preds, np.ndarray) and preds.ndim == 2 and preds.shape[1] == 2:
         out_df = pd.DataFrame(
@@ -136,3 +136,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
